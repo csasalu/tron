@@ -11,9 +11,9 @@ class SimpleServer(object):
     _should_shut_down = False
     _start_timestamp = 0
 
-    def __init__(self, port: int, bot_request_handler: SimpleRequestHandler) -> None:
+    def __init__(self, port: int, request_handler: SimpleRequestHandler) -> None:
         self._port = port
-        self._bot_request_handler = bot_request_handler
+        self._request_handler = request_handler
 
     def run(self) -> None:
         self._start_timestamp = time()
@@ -40,4 +40,4 @@ class SimpleServer(object):
         if request == UPTIME_REQUEST:
             connection.sendall(str(int(time() - self._start_timestamp)).encode('utf'))
         else:
-            connection.sendall(self._bot_request_handler.process_request(request).encode('utf'))
+            connection.sendall(self._request_handler.process_request(request).encode('utf'))
