@@ -18,4 +18,4 @@ class Move:
             return str(self.step1) + str(self.step2)
 
     def __repr__(self):
-        return "<Move: %s>" % self.__class__, self.__str__()
+        return "<Move: %s>" % self.__str__()
