@@ -1,4 +1,4 @@
-from socket import socket
+import socket
 from time import time
 
 from suitebot.server.simple_request_handler import SimpleRequestHandler
@@ -17,8 +17,9 @@ class SimpleServer(object):
 
     def run(self) -> None:
         self._start_timestamp = time()
-        sock = socket()
+        sock = socket.socket()
         try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(('', self._port))
             sock.listen()
             while not self._should_shut_down:
@@ -30,7 +31,7 @@ class SimpleServer(object):
         finally:
             sock.close()
 
-    def _handle_request(self, connection: socket) -> None:
+    def _handle_request(self, connection: socket.socket) -> None:
         request = connection.makefile().readline().strip()
         if not request:
             return
