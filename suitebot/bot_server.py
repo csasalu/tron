@@ -1,7 +1,8 @@
 import sys
 from typing import List
 
-from suitebot.ai.sample_bot_ai import SampleBotAi
+#from suitebot.ai.sample_bot_ai import SampleBotAi
+from suitebot.ai.airbot import Airbot
 from suitebot.bot_request_handler import BotRequestHandler
 from suitebot.server.simple_server import SimpleServer
 
@@ -16,7 +17,8 @@ def _determine_port(args: List[str]) -> int:
 
 
 if __name__ == "__main__":
-    bot_ai = SampleBotAi() # replace with your own AI
+    #bot_ai = SampleBotAi() # replace with your own AI
+    bot_ai = Airbot() # replace with your own AI
 
     port = _determine_port(sys.argv[1:])
 

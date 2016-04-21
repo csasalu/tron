@@ -7,14 +7,16 @@ from suitebot.game.game_state import GameState
 from suitebot.game.move import Move
 from suitebot.game.point import Point
 
+BOT_NAME = 'Airbot'
+
 DEFAULT_MOVE = Move(DOWN)
 
 SINGLE_MOVES = tuple([Move(d) for d in ALL_DIRECTIONS])
 DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)])
 
 
-class SampleBotAi(BotAi):
-    """Sample AI. The AI has some serious flaws, which is intentional."""
+class Airbot(BotAi):
+    """OpenAir team's bot AI.  Based off SampleBot AI."""
 
     _bot_id = None  # type: int
     _game_state = None  # type: GameState
@@ -46,7 +48,7 @@ class SampleBotAi(BotAi):
         return DEFAULT_MOVE
 
     def get_name(self) -> str:
-        return "Sample AI"
+        return BOT_NAME
 
     def _is_dead(self) -> bool:
         return self._bot_id not in self._game_state.get_live_bot_ids()
