@@ -2,7 +2,7 @@ import itertools
 from typing import Iterator
 
 from suitebot.ai.bot_ai import BotAi
-from suitebot.game.direction import DOWN, ALL_DIRECTIONS
+from suitebot.game.direction import ALL_DIRECTIONS, UP, DOWN, LEFT, RIGHT
 from suitebot.game.game_state import GameState
 from suitebot.game.move import Move
 from suitebot.game.point import Point
@@ -33,11 +33,24 @@ class Airbot(BotAi):
         self._game_state = game_state
         if self._is_dead():
             return DEFAULT_MOVE
+
+        # first valid supplier wins
         move_suppliers = (
+            # active avoidance moves (immediate danger,
+            # e.g. if we don't go away, we are eaten on next turn)
+            # ...
+            # NOTE that we don't calc score here, so we don't combine minimized
+            # danger with maximized profit!)
+
+            # profitable one-step moves (no danger, following best immediate profit)
             self._close_treasure_move_supplier,
             self._close_battery_move_supplier,
+
+            # profitable two-step moves (no danger, following best remote profit)
             self._reachable_treasure_move_supplier,
             self._reachable_battery_move_supplier,
+
+            # passive avoidance moves (no profit, no danger, just moving around obstacles)
             self._safe_move_supplier,
         )
         for move_supplier in move_suppliers:
@@ -78,7 +91,14 @@ class Airbot(BotAi):
 
     def _is_safe_move(self, move: Move) -> bool:
         move_destination = self._destination(move)
+        if not self._is_destination_within_plan_boundaries(move_destination):
+            return False
         return move_destination not in self._game_state.get_obstacle_locations()
+
+    def _is_destination_within_plan_boundaries(self, destination: Point) -> bool:
+        horizontal_ok = 0 <= destination.x < self._game_state.get_plan_width()
+        vertical_ok   = 0 <= destination.y < self._game_state.get_plan_height()
+        return horizontal_ok and vertical_ok
 
     def _destination(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
