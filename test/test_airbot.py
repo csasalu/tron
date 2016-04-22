@@ -4,14 +4,22 @@ from suitebot.game.direction import *
 from suitebot.game.move import Move
 
 
+# XXX actual threshold depends on concrete game rules
+LOW_BOT_ENERGY = 1
+
+
 class BaseAirbotTest:
 
-    ME = 1    # default bot ID
+    BOT_ID = 1    # default bot ID
 
-    def go(self, game_plan):
+    def go(self, game_plan, energy=None):
         game_state = game_state_factory.create_from_game_plan_lines(game_plan)
+        if energy:
+            game_state._bot_energy_map = {
+                self.BOT_ID: energy,
+            }
         bot = Airbot()
-        return bot.make_move(self.ME, game_state)
+        return bot.make_move(self.BOT_ID, game_state)
 
 
 class TestAirbotBoundaries(BaseAirbotTest):
@@ -109,13 +117,38 @@ class TestAirbotTreasure(BaseAirbotTest):
 
     def test_should_collect_nearest_treasure(self):
         game_plan = [
+            '!  ',
+            ' 1!',
+            ' ! ',
+        ]
+        valid_steps = RIGHT, DOWN
+        assert self.go(game_plan).step1 in valid_steps
+
+    def test_should_collect_reachable_treasure(self):
+        game_plan = [
+            '!  ',
+            ' 1 ',
+            '  !',
+        ]
+        valid_moves = (
+            # to upper left corner
+            Move(LEFT, UP),
+            Move(UP, LEFT),
+            # to bottom right corner
+            Move(DOWN, RIGHT),
+            Move(RIGHT, DOWN),
+        )
+        assert self.go(game_plan) in valid_moves
+
+    def test_should_collect_nearest_treasure__with_obstacles(self):
+        game_plan = [
             '****',
             '*1 !',
             '*!  ',
         ]
         assert self.go(game_plan).step1 == DOWN
 
-    def test_should_collect_treasure_with_double_move(self):
+    def test_should_collect_reachable_treasure__with_obstacles(self):
         game_plan = [
             '****',
             '*1 !',
@@ -125,6 +158,34 @@ class TestAirbotTreasure(BaseAirbotTest):
 
 
 class TestAirbotBattery(BaseAirbotTest):
+
+    def test_should_collect_nearest_battery(self):
+        game_plan = [
+            '+  ',
+            ' 1+',
+            '++ ',
+        ]
+        valid_moves = Move(RIGHT), Move(DOWN)
+        assert self.go(game_plan) in valid_moves
+
+    def test_should_collect_reachable_battery(self):
+        game_plan = [
+            '+  ',
+            ' 1 ',
+            '  +',
+        ]
+        valid_moves = (
+            # to upper left corner
+            Move(LEFT, UP),
+            Move(UP, LEFT),
+            # to bottom right corner
+            Move(DOWN, RIGHT),
+            Move(RIGHT, DOWN),
+        )
+        assert self.go(game_plan) in valid_moves
+
+
+class TestAirbotBatteryVsTreasure(BaseAirbotTest):
 
     def test_should_prefer_treasure_to_battery_if_distance_is_equal(self):
         game_plan = [
@@ -141,3 +202,21 @@ class TestAirbotBattery(BaseAirbotTest):
             '*+  ',
         ]
         assert self.go(game_plan).step1 == DOWN
+
+    def test_should_prefer_battery_if_weak(self):
+        game_plan = [
+            ' + ',
+            '!1+',
+            ' ! ',
+        ]
+        valid_moves = Move(UP), Move(RIGHT)
+        assert self.go(game_plan, energy=LOW_BOT_ENERGY) in valid_moves
+
+    def test_should_prefer_battery_if_weak__inverted(self):
+        game_plan = [
+            ' ! ',
+            '+1!',
+            ' + ',
+        ]
+        valid_moves = Move(DOWN), Move(LEFT)
+        assert self.go(game_plan, energy=LOW_BOT_ENERGY) in valid_moves

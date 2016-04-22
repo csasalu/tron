@@ -14,6 +14,9 @@ DEFAULT_MOVE = Move(DOWN)
 SINGLE_MOVES = tuple([Move(d) for d in ALL_DIRECTIONS])
 DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)])
 
+# XXX depends on concrete game rules
+CRITICAL_HEALTH = 1
+
 
 class Airbot(BotAi):
     """OpenAir team's bot AI.  Based off SampleBot AI."""
@@ -34,6 +37,15 @@ class Airbot(BotAi):
         if self._is_dead():
             return DEFAULT_MOVE
 
+        # score = profit - cost - risk
+        #   cost: number of steps
+        #   profit: treasures/batteries obtained on each step
+        #   risk: dangers on each step of the move
+        #
+        # also actions should depend on bot's health: the score of battery
+        # should raise if the bot's health is depleating, etc.
+
+
         # first valid supplier wins
         move_suppliers = (
             # active avoidance moves (immediate danger,
@@ -41,6 +53,9 @@ class Airbot(BotAi):
             # ...
             # NOTE that we don't calc score here, so we don't combine minimized
             # danger with maximized profit!)
+
+            # HACK: ugly without scores!
+            self._close_battery_when_starving_move_supplier,
 
             # profitable one-step moves (no danger, following best immediate profit)
             self._close_treasure_move_supplier,
@@ -68,6 +83,11 @@ class Airbot(BotAi):
 
     def _close_treasure_move_supplier(self) -> Iterator[Move]:
         return filter(self._is_move_to_treasure, SINGLE_MOVES)
+
+    def _close_battery_when_starving_move_supplier(self) -> Iterator[Move]:
+        if not self._is_starving():
+            return iter([])
+        return filter(self._is_move_to_battery, SINGLE_MOVES)
 
     def _close_battery_move_supplier(self) -> Iterator[Move]:
         return filter(self._is_move_to_battery, SINGLE_MOVES)
@@ -107,3 +127,7 @@ class Airbot(BotAi):
             return step1_destination
         else:
             return move.step2.destination_from(step1_destination)
+
+    def _is_starving(self) -> bool:
+        health = self._game_state.get_bot_energy(self._bot_id)
+        return health <= CRITICAL_HEALTH
