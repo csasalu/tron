@@ -22,6 +22,43 @@ class BaseAirbotTest:
         return bot.make_move(self.BOT_ID, game_state)
 
 
+class TestTransparentBoundaries(BaseAirbotTest):
+    """
+    If we are a the rightmost square, we should see the free space
+    on the corresponding leftmost one.
+    """
+    def test_should_see_the_other_side__up(self):
+        game_plan = [
+            '*1*',
+            '***',
+            '* *',
+        ]
+        assert self.go(game_plan) == Move(UP)
+
+    def test_should_see_the_other_side__right(self):
+        game_plan = [
+            '***',
+            ' *1',
+            '***',
+        ]
+        assert self.go(game_plan) == Move(RIGHT)
+
+    def test_should_see_the_other_side__down(self):
+        game_plan = [
+            '* *',
+            '***',
+            '*1*',
+        ]
+        assert self.go(game_plan) == Move(DOWN)
+
+    def test_should_see_the_other_side__left(self):
+        game_plan = [
+            '***',
+            '1* ',
+            '***',
+        ]
+        assert self.go(game_plan) == Move(LEFT)
+
 '''
 class TestAirbotBoundaries(BaseAirbotTest):
 
