@@ -54,6 +54,8 @@ class Airbot(BotAi):
             # NOTE that we don't calc score here, so we don't combine minimized
             # danger with maximized profit!)
 
+            self._nook_avoidance_supplier,
+
             # passive avoidance moves (no profit, no danger, just moving around obstacles)
             self._safe_move_supplier,
         )
@@ -76,6 +78,21 @@ class Airbot(BotAi):
     def _is_safe_move(self, move: Move) -> bool:
         move_destination = self._destination(move)
         return move_destination not in self._game_state.get_obstacle_locations()
+
+    def _nook_avoidance_supplier(self) -> Iterator[Move]:
+        return filter(self._is_not_nook, SINGLE_MOVES)
+
+    def _is_not_nook(self, move: Move) -> bool:
+        move_destination = self._destination(move)
+        # after the move there should be no other safe moves (or just one
+        # because we don't count our tail from current state)
+        cnt = 0
+        for dest in ALL_DIRECTIONS:
+            if dest.destination_from(move_destination) in self._game_state.get_obstacle_locations():
+                cnt += 1
+        if cnt >= 3:
+            return False
+        return True
 
     def _destination(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
