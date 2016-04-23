@@ -13,10 +13,20 @@ class Direction(Enum):
         dx, dy = self.value
         dest_x = source.x + dx
         dest_y = source.y + dy
-        if width and dest_x >= width:
-            dest_x -= width
-        if height and dest_y >= height:
-            dest_y -= height
+        if height:
+            if dest_y < 0:
+                # moving above the first row
+                dest_y += height
+            elif dest_y >= height:
+                # moving below last row
+                dest_y -= height
+        if width:
+            if dest_x < 0:
+                # moving to the left of the first column
+                dest_x += width
+            elif dest_x >= width:
+                # moving to the right of the last column
+                dest_x -= width
         return Point(dest_x, dest_y)
 
     def __str__(self) -> str:
