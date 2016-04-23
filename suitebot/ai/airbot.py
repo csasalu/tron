@@ -54,7 +54,7 @@ class Airbot(BotAi):
             # NOTE that we don't calc score here, so we don't combine minimized
             # danger with maximized profit!)
 
-            self._nook_avoidance_supplier,
+#           self._nook_avoidance_supplier,
 
             # passive avoidance moves (no profit, no danger, just moving around obstacles)
             self._safe_move_supplier,
@@ -77,10 +77,10 @@ class Airbot(BotAi):
 
     def _is_safe_move(self, move: Move) -> bool:
         move_destination = self._destination(move)
-        return move_destination not in self._game_state.get_obstacle_locations()
+        is_not_obstacle = move_destination not in self._game_state.get_obstacle_locations()
+        is_not_nook = self._is_not_nook(move)
+        return is_not_obstacle and is_not_nook
 
-    def _nook_avoidance_supplier(self) -> Iterator[Move]:
-        return filter(self._is_not_nook, SINGLE_MOVES)
 
     def _is_not_nook(self, move: Move) -> bool:
         move_destination = self._destination(move)
@@ -96,7 +96,9 @@ class Airbot(BotAi):
 
     def _destination(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
-        step1_destination = move.step1.destination_from(bot_location)
+        step1_destination = move.step1.destination_from(bot_location,
+                                                       height=self._game_state.get_plan_height(),
+                                                       width=self._game_state.get_plan_width())
         if not move.step2:
             return step1_destination
         else:

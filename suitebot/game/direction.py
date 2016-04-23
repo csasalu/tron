@@ -9,9 +9,15 @@ class Direction(Enum):
     left = (-1, 0)
     right = (1, 0)
 
-    def destination_from(self, source: Point) -> Point:
+    def destination_from(self, source: Point, height: int=None, width: int=None) -> Point:
         dx, dy = self.value
-        return Point(source.x + dx, source.y + dy)
+        dest_x = source.x + dx
+        dest_y = source.y + dy
+        if width and dest_x > width:
+            dest_x -= width+1
+        if height and dest_y > height:
+            dest_y -= height+1
+        return Point(dest_x, dest_y)
 
     def __str__(self) -> str:
         return self.name[0].upper()

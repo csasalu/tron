@@ -308,3 +308,19 @@ def distance(a, b):
     return delta_x + delta_y
 
 
+class TestRegressions(BaseAirbotTest):
+    def test_suicide_round1(self):
+        game_plan = [
+            ' **',
+            ' **',
+            ' 1*',
+        ]
+        assert self.go(game_plan).step1 == LEFT
+
+
+class TestDirection:
+    def test_destination_from(self):
+        assert RIGHT.destination_from(Point(0,0)) == Point(1,0)
+        assert RIGHT.destination_from(Point(3,0)) == Point(4,0)
+        assert RIGHT.destination_from(Point(3,0), width=3) == Point(0,0)
+        assert RIGHT.destination_from(Point(3,0), width=4) == Point(4,0)
