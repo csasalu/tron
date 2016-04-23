@@ -175,11 +175,46 @@ class TestAirbotObstacles(BaseAirbotTest):
         ]
         assert self.go(game_plan).step1 != UP
 
+    def test_should_avoid_nooks__up_1(self):
+        game_plan = [
+            '***',
+            '* *',
+            '* *',
+            ' 1 ',
+        ]
+        assert self.go(game_plan).step1 != UP
+
+    def test_should_avoid_nooks__up_2(self):
+        game_plan = [
+            '***',
+            '* *',
+            '* *',
+            '* *',
+            ' 1 ',
+        ]
+        assert self.go(game_plan).step1 != UP
+
     def test_should_avoid_nooks__right(self):
         game_plan = [
             ' **',
             '1 *',
             ' **',
+        ]
+        assert self.go(game_plan).step1 != RIGHT
+
+    def test_should_avoid_nooks__right_1(self):
+        game_plan = [
+            ' ***',
+            '1  *',
+            ' ***',
+        ]
+        assert self.go(game_plan).step1 != RIGHT
+
+    def test_should_avoid_nooks__right_2(self):
+        game_plan = [
+            ' ****',
+            '1   *',
+            ' ****',
         ]
         assert self.go(game_plan).step1 != RIGHT
 
@@ -191,11 +226,28 @@ class TestAirbotObstacles(BaseAirbotTest):
         ]
         assert self.go(game_plan).step1 != DOWN
 
+    def test_should_avoid_nooks__down_1(self):
+        game_plan = [
+            ' 1 ',
+            '* *',
+            '* *',
+            '***',
+        ]
+        assert self.go(game_plan).step1 != DOWN
+
     def test_should_avoid_nooks__left(self):
         game_plan = [
             '** ',
             '* 1',
             '** ',
+        ]
+        assert self.go(game_plan).step1 != LEFT
+
+    def test_should_avoid_nooks__left_1(self):
+        game_plan = [
+            '*** ',
+            '*  1',
+            '*** ',
         ]
         assert self.go(game_plan).step1 != LEFT
 
@@ -243,6 +295,18 @@ class TestHeadAwareness(BaseAirbotTest):
         ]
         wrong_steps = RIGHT,
         assert self.go(game_plan).step1 not in wrong_steps
+
+    def test_should_avoid_risky_zone_adjacent_to_one_bot_fast(self):
+        game_plan = [
+            '      ',
+            '1  2  ',
+            '      ',
+            '      ',
+            '      ',
+        ]
+        wrong_steps = RIGHT,RIGHT
+        assert self.go(game_plan).step1 not in wrong_steps
+#        assert self.go(game_plan) == Move(RIGHT, RIGHT)
 
     def test_should_avoid_risky_zone_adjacent_to_one_bot__cross_boundary(self):
         game_plan = [
