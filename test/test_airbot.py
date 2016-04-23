@@ -184,6 +184,100 @@ class TestAirbotObstacles(BaseAirbotTest):
         assert self.go(game_plan).step1 != LEFT
 
 
+class TestHeadAwareness(BaseAirbotTest):
+
+    def test_should_avoid_risky_zone_adjacent_to_one_bot(self):
+        game_plan = [
+            '     ',
+            '1 2  ',
+            '     ',
+            '     ',
+            '     ',
+        ]
+        wrong_steps = RIGHT,
+        assert self.go(game_plan).step1 not in wrong_steps
+
+    def test_should_avoid_risky_zone_adjacent_to_one_bot__cross_boundary(self):
+        game_plan = [
+            '    ',
+            '1 2 ',
+            '    ',
+            '    ',
+        ]
+        wrong_steps = RIGHT, LEFT
+        assert self.go(game_plan).step1 not in wrong_steps
+
+    def test_should_avoid_risky_zone_adjacent_to_one_bot__cross_boundary__180deg(self):
+        game_plan = [
+            '    ',
+            '1   ',
+            '    ',
+            '2   ',
+        ]
+        wrong_steps = UP, DOWN
+        assert self.go(game_plan).step1 not in wrong_steps
+
+    def test_should_avoid_risky_zone_adjacent_to_two_bots(self):
+        game_plan = [
+            '     ',
+            '1 2  ',
+            '     ',
+            '3    ',
+            '     ',
+        ]
+        wrong_steps = RIGHT, DOWN
+        assert self.go(game_plan).step1 not in wrong_steps
+
+    def test_should_avoid_risky_zone_adjacent_to_two_bots__cross_boundary__no_safe_move(self):
+        game_plan = [
+            '    ',
+            '1 2 ',
+            '    ',
+            '3   ',
+        ]
+        equally_risky_moves = UP, RIGHT, DOWN, LEFT
+        assert self.go(game_plan).step1 in equally_risky_moves
+
+
+class TestFillingSpace(BaseAirbotTest):
+    """
+    The bot should fill in the available space in an efficient manner:
+
+    - stay close to the obstacles
+    - fill the biggest area
+    """
+    def test_should_stay_close_to_obstacles__x1(self):
+        game_plan = [
+            '    ',
+            ' 1  ',
+            ' *  ',
+            '    ',
+        ]
+        valid_steps = UP, RIGHT, LEFT
+        assert self.go(game_plan).step1 in valid_steps
+
+    def test_should_stay_close_to_obstacles__x2(self):
+        game_plan = [
+            '    ',
+            ' 1  ',
+            ' ** ',
+            '    ',
+        ]
+        valid_steps = RIGHT,
+        assert self.go(game_plan).step1 in valid_steps
+
+    def test_should_stay_close_to_obstacles__x3(self):
+        game_plan = [
+            '    ',
+            ' 1  ',
+            ' ***',
+            '    ',
+        ]
+        assert self.go(game_plan).step1 == RIGHT
+        # go fast!
+        assert self.go(game_plan) in Move(RIGHT, RIGHT)
+
+
 class TestDistance:
     def test_distance_same_point(self):
         assert distance(Point(0, 0), Point(0, 0)) == 0
