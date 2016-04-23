@@ -54,17 +54,6 @@ class Airbot(BotAi):
             # NOTE that we don't calc score here, so we don't combine minimized
             # danger with maximized profit!)
 
-            # HACK: ugly without scores!
-            self._close_battery_when_starving_move_supplier,
-
-            # profitable one-step moves (no danger, following best immediate profit)
-            self._close_treasure_move_supplier,
-            self._close_battery_move_supplier,
-
-            # profitable two-step moves (no danger, following best remote profit)
-            self._reachable_treasure_move_supplier,
-            self._reachable_battery_move_supplier,
-
             # passive avoidance moves (no profit, no danger, just moving around obstacles)
             self._safe_move_supplier,
         )
@@ -81,44 +70,12 @@ class Airbot(BotAi):
     def _is_dead(self) -> bool:
         return self._bot_id not in self._game_state.get_live_bot_ids()
 
-    def _close_treasure_move_supplier(self) -> Iterator[Move]:
-        return filter(self._is_move_to_treasure, SINGLE_MOVES)
-
-    def _close_battery_when_starving_move_supplier(self) -> Iterator[Move]:
-        if not self._is_starving():
-            return iter([])
-        return filter(self._is_move_to_battery, SINGLE_MOVES)
-
-    def _close_battery_move_supplier(self) -> Iterator[Move]:
-        return filter(self._is_move_to_battery, SINGLE_MOVES)
-
-    def _reachable_treasure_move_supplier(self) -> Iterator[Move]:
-        return filter(self._is_move_to_treasure, DOUBLE_MOVES)
-
-    def _reachable_battery_move_supplier(self) -> Iterator[Move]:
-        return filter(self._is_move_to_battery, DOUBLE_MOVES)
-
     def _safe_move_supplier(self) -> Iterator[Move]:
         return filter(self._is_safe_move, SINGLE_MOVES)
 
-    def _is_move_to_treasure(self, move: Move) -> bool:
-        move_destination = self._destination(move)
-        return move_destination in self._game_state.get_treasure_locations()
-
-    def _is_move_to_battery(self, move: Move) -> bool:
-        move_destination = self._destination(move)
-        return move_destination in self._game_state.get_battery_locations()
-
     def _is_safe_move(self, move: Move) -> bool:
         move_destination = self._destination(move)
-        if not self._is_destination_within_plan_boundaries(move_destination):
-            return False
         return move_destination not in self._game_state.get_obstacle_locations()
-
-    def _is_destination_within_plan_boundaries(self, destination: Point) -> bool:
-        horizontal_ok = 0 <= destination.x < self._game_state.get_plan_width()
-        vertical_ok   = 0 <= destination.y < self._game_state.get_plan_height()
-        return horizontal_ok and vertical_ok
 
     def _destination(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
@@ -127,7 +84,3 @@ class Airbot(BotAi):
             return step1_destination
         else:
             return move.step2.destination_from(step1_destination)
-
-    def _is_starving(self) -> bool:
-        health = self._game_state.get_bot_energy(self._bot_id)
-        return health <= CRITICAL_HEALTH

@@ -22,6 +22,7 @@ class BaseAirbotTest:
         return bot.make_move(self.BOT_ID, game_state)
 
 
+'''
 class TestAirbotBoundaries(BaseAirbotTest):
 
     def test_should_avoid_top_boundary(self):
@@ -91,6 +92,7 @@ class TestAirbotBoundaries(BaseAirbotTest):
         ]
         wrong_moves = Move(DOWN), Move(LEFT)
         assert self.go(game_plan) not in wrong_moves
+'''
 
 class TestAirbotObstacles(BaseAirbotTest):
 
@@ -113,110 +115,33 @@ class TestAirbotObstacles(BaseAirbotTest):
         assert self.go(game_plan).step1 not in wrong_steps
 
 
-class TestAirbotTreasure(BaseAirbotTest):
+class TestDistance:
+    def test_distance_same_point(self):
+        assert distance(Point(0, 0), Point(0, 0)) == 0
 
-    def test_should_collect_nearest_treasure(self):
-        game_plan = [
-            '!  ',
-            ' 1!',
-            ' ! ',
-        ]
-        valid_steps = RIGHT, DOWN
-        assert self.go(game_plan).step1 in valid_steps
+    def test_distance_adjacent_x(self):
+        assert distance(Point(0, 0), Point(1, 0)) == 1
 
-    def test_should_collect_reachable_treasure(self):
-        game_plan = [
-            '!  ',
-            ' 1 ',
-            '  !',
-        ]
-        valid_moves = (
-            # to upper left corner
-            Move(LEFT, UP),
-            Move(UP, LEFT),
-            # to bottom right corner
-            Move(DOWN, RIGHT),
-            Move(RIGHT, DOWN),
-        )
-        assert self.go(game_plan) in valid_moves
+    def test_distance_adjacent_x_reversed(self):
+        assert distance(Point(1, 0), Point(0, 0)) == 1
 
-    def test_should_collect_nearest_treasure__with_obstacles(self):
-        game_plan = [
-            '****',
-            '*1 !',
-            '*!  ',
-        ]
-        assert self.go(game_plan).step1 == DOWN
+    def test_distance_adjacent_y(self):
+        assert distance(Point(0, 0), Point(0, 1)) == 1
 
-    def test_should_collect_reachable_treasure__with_obstacles(self):
-        game_plan = [
-            '****',
-            '*1 !',
-            '*   ',
-        ]
-        assert self.go(game_plan) == Move(RIGHT, RIGHT)
+    def test_distance_adjacent_y_reversed(self):
+        assert distance(Point(0, 1), Point(0, 0)) == 1
+
+    def test_distance_diagonal_2steps(self):
+        assert distance(Point(0, 0), Point(1, 1)) == 2
+
+    def test_distance_diagonal_2steps_reversed(self):
+        assert distance(Point(1, 1), Point(0, 0)) == 2
+
+def distance(a, b):
+    if a == b:
+        return 0
+    delta_x = abs(a.x - b.x)
+    delta_y = abs(a.y - b.y)
+    return delta_x + delta_y
 
 
-class TestAirbotBattery(BaseAirbotTest):
-
-    def test_should_collect_nearest_battery(self):
-        game_plan = [
-            '+  ',
-            ' 1+',
-            '++ ',
-        ]
-        valid_moves = Move(RIGHT), Move(DOWN)
-        assert self.go(game_plan) in valid_moves
-
-    def test_should_collect_reachable_battery(self):
-        game_plan = [
-            '+  ',
-            ' 1 ',
-            '  +',
-        ]
-        valid_moves = (
-            # to upper left corner
-            Move(LEFT, UP),
-            Move(UP, LEFT),
-            # to bottom right corner
-            Move(DOWN, RIGHT),
-            Move(RIGHT, DOWN),
-        )
-        assert self.go(game_plan) in valid_moves
-
-
-class TestAirbotBatteryVsTreasure(BaseAirbotTest):
-
-    def test_should_prefer_treasure_to_battery_if_distance_is_equal(self):
-        game_plan = [
-            '****',
-            '*1 !',
-            '* + ',
-        ]
-        assert self.go(game_plan) == Move(RIGHT, RIGHT)
-
-    def test_should_prefer_battery_to_treasure_if_closer(self):
-        game_plan = [
-            '****',
-            '*1 !',
-            '*+  ',
-        ]
-        assert self.go(game_plan).step1 == DOWN
-
-    def test_should_prefer_battery_if_weak(self):
-        game_plan = [
-            ' + ',
-            '!1+',
-            ' ! ',
-        ]
-        valid_moves = Move(UP), Move(RIGHT)
-        assert self.go(game_plan, energy=LOW_BOT_ENERGY) in valid_moves
-
-    def test_should_prefer_battery_if_weak__inverted(self):
-        game_plan = [
-            ' ! ',
-            '+1!',
-            ' + ',
-        ]
-        valid_moves = Move(DOWN), Move(LEFT)
-        assert self.go(game_plan, energy=LOW_BOT_ENERGY) in valid_moves
