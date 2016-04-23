@@ -322,5 +322,13 @@ class TestDirection:
     def test_destination_from(self):
         assert RIGHT.destination_from(Point(0,0)) == Point(1,0)
         assert RIGHT.destination_from(Point(3,0)) == Point(4,0)
-        assert RIGHT.destination_from(Point(3,0), width=3) == Point(0,0)
-        assert RIGHT.destination_from(Point(3,0), width=4) == Point(4,0)
+
+    def test_destination_from__cross_boundary__x(self):
+        assert RIGHT.destination_from(Point(0,0), width=3) == Point(1,0)
+        assert RIGHT.destination_from(Point(1,0), width=3) == Point(2,0)
+        assert RIGHT.destination_from(Point(2,0), width=3) == Point(0,0)
+
+    def test_destination_from__cross_boundary__y(self):
+        assert DOWN.destination_from(Point(0,0), height=3) == Point(0,1)
+        assert DOWN.destination_from(Point(0,1), height=3) == Point(0,2)
+        assert DOWN.destination_from(Point(0,2), height=3) == Point(0,0)

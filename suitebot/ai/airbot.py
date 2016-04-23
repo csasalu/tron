@@ -88,7 +88,10 @@ class Airbot(BotAi):
         # because we don't count our tail from current state)
         cnt = 0
         for dest in ALL_DIRECTIONS:
-            if dest.destination_from(move_destination) in self._game_state.get_obstacle_locations():
+            possible_dest = dest.destination_from(move_destination,
+                                  height=self._game_state.get_plan_height(),
+                                  width=self._game_state.get_plan_width())
+            if possible_dest in self._game_state.get_obstacle_locations():
                 cnt += 1
         if cnt >= 3:
             return False
@@ -97,9 +100,11 @@ class Airbot(BotAi):
     def _destination(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
         step1_destination = move.step1.destination_from(bot_location,
-                                                       height=self._game_state.get_plan_height(),
-                                                       width=self._game_state.get_plan_width())
+                                   height=self._game_state.get_plan_height(),
+                                   width=self._game_state.get_plan_width())
         if not move.step2:
             return step1_destination
         else:
-            return move.step2.destination_from(step1_destination)
+            return move.step2.destination_from(step1_destination,
+                                   height=self._game_state.get_plan_height(),
+                                   width=self._game_state.get_plan_width())

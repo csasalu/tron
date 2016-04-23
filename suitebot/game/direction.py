@@ -13,10 +13,10 @@ class Direction(Enum):
         dx, dy = self.value
         dest_x = source.x + dx
         dest_y = source.y + dy
-        if width and dest_x > width:
-            dest_x -= width+1
-        if height and dest_y > height:
-            dest_y -= height+1
+        if width and dest_x >= width:
+            dest_x -= width
+        if height and dest_y >= height:
+            dest_y -= height
         return Point(dest_x, dest_y)
 
     def __str__(self) -> str:
