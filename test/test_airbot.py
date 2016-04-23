@@ -199,6 +199,37 @@ class TestAirbotObstacles(BaseAirbotTest):
         ]
         assert self.go(game_plan).step1 != LEFT
 
+    def test_should_fill_nook__left(self):
+        game_plan = [
+            '***',
+            '* 1',
+            '***',
+        ]
+        assert self.go(game_plan).step1 == LEFT
+
+    def test_should_fill_nook__right(self):
+        game_plan = [
+            '***',
+            '1 *',
+            '***',
+        ]
+        assert self.go(game_plan).step1 == RIGHT
+
+    def test_should_fill_nook__up(self):
+        game_plan = [
+            '* *',
+            '*1*',
+            '***',
+        ]
+        assert self.go(game_plan).step1 == UP
+
+    def test_should_fill_nook__down(self):
+        game_plan = [
+            '***',
+            '*1*',
+            '* *',
+        ]
+        assert self.go(game_plan).step1 == DOWN
 
 class TestHeadAwareness(BaseAirbotTest):
 
