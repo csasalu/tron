@@ -14,9 +14,19 @@ DEFAULT_MOVE = Move(DOWN)
 SINGLE_MOVES = tuple([Move(d) for d in ALL_DIRECTIONS])
 DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)])
 STRAIGHT_DOUBLE_MOVES = tuple([Move(d, d) for d in ALL_DIRECTIONS])
+SILLY_PAIRS = (
+    (UP,DOWN),
+    (DOWN,UP),
+    (LEFT,RIGHT),
+    (RIGHT,LEFT),
+)
+DETOUR_DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in
+                             itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)
+                             if d1 != d2 and (d1,d2) not in SILLY_PAIRS])
 
 NOOK_PENALTY = -100
 COLLISION_PENALTY = -200
+CLOSE_TO_WALLS_REWARD = 30
 
 
 class Airbot(BotAi):
@@ -29,32 +39,29 @@ class Airbot(BotAi):
         return (
             {
                 'func': self._safe_move_supplier,
-                'coefficient': 1,
+                'coefficient': 1.0,
             },
             {
                 'func': self._safe_haste_move_supplier,
                 'coefficient': 1.2,
             },
+            {
+                'func': self._safe_detour_move_supplier,
+                'coefficient': 0.8,
+            },
         )
 
     def make_move(self, bot_id: int, game_state: GameState) -> Move:
-        """If a treasure is close (distance 1), go to it;
-        otherwise, if a battery is close, go to it;
-        otherwise, if a treasure is reachable (distance 2), go to it;
-        otherwise, if a battery is reachable, go to it;
-        otherwise, if a safe move can be made (one that avoids any obstacles), do it;
-        otherwise, go down.
-        """
         self._bot_id = bot_id
         self._game_state = game_state
         if self._is_dead():
             return DEFAULT_MOVE
 
-        # first valid supplier wins
         move_suppliers = self.get_move_suppliers()
         move_score_calculators = (
             self._nook_risk_calculator,
             self._collision_risk_calculator,
+            self._staying_close_to_walls_calculator,
         )
         scored_moves = []
         for move_supplier in move_suppliers:
@@ -66,7 +73,7 @@ class Airbot(BotAi):
                 if not supplied_moves:
                     continue
                 for move in supplied_moves:
-                    score = 0.0
+                    score = 1.0
                     for score_calculator in move_score_calculators:
                         score += score_calculator(move)
                     scored_moves.append(
@@ -95,6 +102,9 @@ class Airbot(BotAi):
     def _safe_haste_move_supplier(self) -> Iterator[Move]:
         return filter(self._is_safe_double_move, STRAIGHT_DOUBLE_MOVES)
 
+    def _safe_detour_move_supplier(self) -> Iterator[Move]:
+        return filter(self._is_safe_double_move, DETOUR_DOUBLE_MOVES)
+
     def _is_safe_move(self, move: Move) -> bool:
         dest = self._destination(move)
         return dest not in self._game_state.get_obstacle_locations()
@@ -115,6 +125,28 @@ class Airbot(BotAi):
             return 0
         else:
             return COLLISION_PENALTY
+
+    def _staying_close_to_walls_calculator(self, move: Move) -> float:
+        if self._is_move_close_to_walls(move):
+            return CLOSE_TO_WALLS_REWARD
+        else:
+            return 0
+
+    def _is_move_close_to_walls(self, move: Move) -> bool:
+        dests = self._destinations(move)
+        for dest in dests:
+            walls_nearby_cnt = 0
+            for adj_dir in ALL_DIRECTIONS:
+                adj_cell = adj_dir.destination_from(dest,
+                                  height=self._game_state.get_plan_height(),
+                                  width=self._game_state.get_plan_width())
+                if adj_cell in self._game_state.get_obstacle_locations():
+                    walls_nearby_cnt += 1
+            # 1-2 walls are fine, otherwise not as good
+            if walls_nearby_cnt not in (1, 2):
+                return False
+        return True
+
 
     def _is_not_nook(self, move: Move) -> bool:
         move_destination = self._destination(move)

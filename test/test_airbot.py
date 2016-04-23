@@ -349,8 +349,23 @@ class TestFillingSpace(BaseAirbotTest):
             '     ',
             '     ',
         ]
-        assert self.go(game_plan) == Move(RIGHT)
+        move = self.go(game_plan)
 
+        # plain wrong
+        assert move != Move(RIGHT, RIGHT)
+
+        # good choice
+        assert move in (
+            Move(RIGHT),
+            Move(UP, RIGHT),
+            Move(RIGHT, UP),
+        )
+
+#       # ideal choice
+#       assert move in (
+#           Move(UP, RIGHT),
+#           Move(RIGHT, UP),
+#       )
 
 
 class TestDistance:
