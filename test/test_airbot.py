@@ -59,6 +59,22 @@ class TestTransparentBoundaries(BaseAirbotTest):
         ]
         assert self.go(game_plan) == Move(LEFT)
 
+    def test_should_see_the_other_side__obstacle_left(self):
+        game_plan = [
+            ' **',
+            '1**',
+            '***',
+        ]
+        assert self.go(game_plan) == Move(UP)
+
+    def test_should_see_the_other_side__obstacle_right(self):
+        game_plan = [
+            '***',
+            '**1',
+            '** ',
+        ]
+        assert self.go(game_plan) == Move(DOWN)
+
 '''
 class TestAirbotBoundaries(BaseAirbotTest):
 
