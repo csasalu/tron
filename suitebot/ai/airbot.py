@@ -14,8 +14,8 @@ DEFAULT_MOVE = Move(DOWN)
 SINGLE_MOVES = tuple([Move(d) for d in ALL_DIRECTIONS])
 DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)])
 
-# XXX depends on concrete game rules
-CRITICAL_HEALTH = 1
+NOOK_PENALTY = -100
+COLLISION_PENALTY = -200
 
 
 class Airbot(BotAi):
@@ -37,31 +37,33 @@ class Airbot(BotAi):
         if self._is_dead():
             return DEFAULT_MOVE
 
-        # score = profit - cost - risk
-        #   cost: number of steps
-        #   profit: treasures/batteries obtained on each step
-        #   risk: dangers on each step of the move
-        #
-        # also actions should depend on bot's health: the score of battery
-        # should raise if the bot's health is depleating, etc.
-
-
         # first valid supplier wins
         move_suppliers = (
-            # active avoidance moves (immediate danger,
-            # e.g. if we don't go away, we are eaten on next turn)
-            # ...
-            # NOTE that we don't calc score here, so we don't combine minimized
-            # danger with maximized profit!)
-
-#           self._nook_avoidance_supplier,
-
-            # passive avoidance moves (no profit, no danger, just moving around obstacles)
             self._safe_move_supplier,
+        )
+        move_score_calculators = (
+            self._nook_risk_calculator,
+            self._collision_risk_calculator,
         )
         for move_supplier in move_suppliers:
             try:
-                return next(move_supplier())
+                supplied_moves = list(move_supplier())
+                if not supplied_moves:
+                    continue
+                scored_moves = []
+                for move in supplied_moves:
+                    score = 0.0
+                    for score_calculator in move_score_calculators:
+                        score += score_calculator(move)
+                    scored_moves.append(
+                        {
+                            'move': move,
+                            'score': score,
+                        }
+                    )
+                sorted_moves = list(sorted(scored_moves, key=lambda elem: elem['score']))
+                best_move = sorted_moves[-1]['move']
+                return best_move
             except StopIteration:
                 continue
         return DEFAULT_MOVE
@@ -78,13 +80,21 @@ class Airbot(BotAi):
     def _is_safe_move(self, move: Move) -> bool:
         move_destination = self._destination(move)
         is_not_obstacle = move_destination not in self._game_state.get_obstacle_locations()
-        is_not_nook = self._is_not_nook(move)
-        return is_not_obstacle and is_not_nook
+        return is_not_obstacle #and is_not_nook and is_not_collision_risk
 
+    def _nook_risk_calculator(self, move: Move) -> float:
+        if self._is_not_nook(move):
+            return 0
+        else:
+            return NOOK_PENALTY
+
+    def _collision_risk_calculator(self, move: Move) -> float:
+        if self._is_move_safe_from_enemies(move):
+            return 0
+        else:
+            return COLLISION_PENALTY
 
     def _is_not_nook(self, move: Move) -> bool:
-        return True   # FIXME this blocks correct decisions sometimes,
-                      #       should be weighed instead of true/false
         move_destination = self._destination(move)
         # after the move there should be no other safe moves (or just one
         # because we don't count our tail from current state)
@@ -97,6 +107,27 @@ class Airbot(BotAi):
                 cnt += 1
         if cnt >= 3:
             return False
+        return True
+
+    def _is_move_safe_from_enemies(self, move: Move) -> bool:
+        move_destination = self._destination(move)
+        return self._is_clear_from_enemies(move_destination)
+
+    def _is_clear_from_enemies(self, point: Point) -> bool:
+        cnt = 0
+        all_bot_locations = [
+            self._game_state.get_bot_location(b)
+            for b in self._game_state.get_live_bot_ids()
+            if b != self._bot_id
+        ]
+        for direction in ALL_DIRECTIONS:
+            # actually we check if, getting to that point, we get into the move
+            # zone of an enemy, i.e. if it's adjacent to that point
+            adjacent_square = direction.destination_from(point,
+                                  height=self._game_state.get_plan_height(),
+                                  width=self._game_state.get_plan_width())
+            if adjacent_square in all_bot_locations:
+                return False
         return True
 
     def _destination(self, move: Move) -> Point:
