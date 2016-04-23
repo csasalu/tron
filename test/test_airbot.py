@@ -114,6 +114,38 @@ class TestAirbotObstacles(BaseAirbotTest):
         wrong_steps = UP, DOWN, LEFT
         assert self.go(game_plan).step1 not in wrong_steps
 
+    def test_should_avoid_nooks__up(self):
+        game_plan = [
+            '***',
+            '* *',
+            ' 1 ',
+        ]
+        assert self.go(game_plan).step1 != UP
+
+    def test_should_avoid_nooks__right(self):
+        game_plan = [
+            ' **',
+            '1 *',
+            ' **',
+        ]
+        assert self.go(game_plan).step1 != RIGHT
+
+    def test_should_avoid_nooks__down(self):
+        game_plan = [
+            ' 1 ',
+            '* *',
+            '***',
+        ]
+        assert self.go(game_plan).step1 != DOWN
+
+    def test_should_avoid_nooks__left(self):
+        game_plan = [
+            '** ',
+            '* 1',
+            '** ',
+        ]
+        assert self.go(game_plan).step1 != LEFT
+
 
 class TestDistance:
     def test_distance_same_point(self):
