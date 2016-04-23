@@ -13,6 +13,7 @@ DEFAULT_MOVE = Move(DOWN)
 
 SINGLE_MOVES = tuple([Move(d) for d in ALL_DIRECTIONS])
 DOUBLE_MOVES = tuple([Move(d1, d2) for (d1, d2) in itertools.product(ALL_DIRECTIONS, ALL_DIRECTIONS)])
+STRAIGHT_DOUBLE_MOVES = tuple([Move(d, d) for d in ALL_DIRECTIONS])
 
 NOOK_PENALTY = -100
 COLLISION_PENALTY = -200
@@ -23,6 +24,18 @@ class Airbot(BotAi):
 
     _bot_id = None  # type: int
     _game_state = None  # type: GameState
+
+    def get_move_suppliers(self):
+        return (
+            {
+                'func': self._safe_move_supplier,
+                'coefficient': 1,
+            },
+            {
+                'func': self._safe_haste_move_supplier,
+                'coefficient': 1.2,
+            },
+        )
 
     def make_move(self, bot_id: int, game_state: GameState) -> Move:
         """If a treasure is close (distance 1), go to it;
@@ -38,19 +51,20 @@ class Airbot(BotAi):
             return DEFAULT_MOVE
 
         # first valid supplier wins
-        move_suppliers = (
-            self._safe_move_supplier,
-        )
+        move_suppliers = self.get_move_suppliers()
         move_score_calculators = (
             self._nook_risk_calculator,
             self._collision_risk_calculator,
         )
+        scored_moves = []
         for move_supplier in move_suppliers:
+            supplier_func = move_supplier['func']
+            supplier_coeff = move_supplier['coefficient']
+
             try:
-                supplied_moves = list(move_supplier())
+                supplied_moves = list(supplier_func())
                 if not supplied_moves:
                     continue
-                scored_moves = []
                 for move in supplied_moves:
                     score = 0.0
                     for score_calculator in move_score_calculators:
@@ -58,14 +72,15 @@ class Airbot(BotAi):
                     scored_moves.append(
                         {
                             'move': move,
-                            'score': score,
+                            'score': score * supplier_coeff,
                         }
                     )
-                sorted_moves = list(sorted(scored_moves, key=lambda elem: elem['score']))
-                best_move = sorted_moves[-1]['move']
-                return best_move
             except StopIteration:
                 continue
+        if scored_moves:
+            sorted_moves = list(sorted(scored_moves, key=lambda elem: elem['score']))
+            best_move = sorted_moves[-1]['move']
+            return best_move
         return DEFAULT_MOVE
 
     def get_name(self) -> str:
@@ -77,10 +92,17 @@ class Airbot(BotAi):
     def _safe_move_supplier(self) -> Iterator[Move]:
         return filter(self._is_safe_move, SINGLE_MOVES)
 
+    def _safe_haste_move_supplier(self) -> Iterator[Move]:
+        return filter(self._is_safe_double_move, STRAIGHT_DOUBLE_MOVES)
+
     def _is_safe_move(self, move: Move) -> bool:
-        move_destination = self._destination(move)
-        is_not_obstacle = move_destination not in self._game_state.get_obstacle_locations()
-        return is_not_obstacle #and is_not_nook and is_not_collision_risk
+        dest = self._destination(move)
+        return dest not in self._game_state.get_obstacle_locations()
+
+    def _is_safe_double_move(self, move: Move) -> bool:
+        dests = list(self._destinations(move))
+        unpassable_points = self._game_state.get_obstacle_locations()
+        return all(dest not in unpassable_points for dest in dests)
 
     def _nook_risk_calculator(self, move: Move) -> float:
         if self._is_not_nook(move):
@@ -110,8 +132,11 @@ class Airbot(BotAi):
         return True
 
     def _is_move_safe_from_enemies(self, move: Move) -> bool:
-        move_destination = self._destination(move)
-        return self._is_clear_from_enemies(move_destination)
+        dests = self._destinations(move)
+        for dest in dests:
+            if not self._is_clear_from_enemies(dest):
+                return False
+        return True
 
     def _is_clear_from_enemies(self, point: Point) -> bool:
         cnt = 0
@@ -131,13 +156,19 @@ class Airbot(BotAi):
         return True
 
     def _destination(self, move: Move) -> Point:
+        return list(self._destinations(move))[-1]
+
+    def _destinations(self, move: Move) -> Point:
         bot_location = self._game_state.get_bot_location(self._bot_id)
-        step1_destination = move.step1.destination_from(bot_location,
-                                   height=self._game_state.get_plan_height(),
-                                   width=self._game_state.get_plan_width())
-        if not move.step2:
-            return step1_destination
-        else:
-            return move.step2.destination_from(step1_destination,
-                                   height=self._game_state.get_plan_height(),
-                                   width=self._game_state.get_plan_width())
+        prev_loc = bot_location
+        for step_name in ('step1', 'step2'):
+            step = getattr(move, step_name)
+            if not step:
+                continue
+            height = self._game_state.get_plan_height()
+            width = self._game_state.get_plan_width()
+            dest = step.destination_from(prev_loc,
+                                         height=height,
+                                         width=width)
+            prev_loc = dest
+            yield dest
