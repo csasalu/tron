@@ -95,8 +95,6 @@ class Airbot(BotAi):
             return COLLISION_PENALTY
 
     def _is_not_nook(self, move: Move) -> bool:
-        return True   # FIXME this blocks correct decisions sometimes,
-                      #       should be weighed instead of true/false
         move_destination = self._destination(move)
         # after the move there should be no other safe moves (or just one
         # because we don't count our tail from current state)
