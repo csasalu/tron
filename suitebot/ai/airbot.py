@@ -79,7 +79,8 @@ class Airbot(BotAi):
         move_destination = self._destination(move)
         is_not_obstacle = move_destination not in self._game_state.get_obstacle_locations()
         is_not_nook = self._is_not_nook(move)
-        return is_not_obstacle and is_not_nook
+        is_not_collision_risk = self._is_clear_from_enemies(move_destination)
+        return is_not_obstacle and is_not_nook and is_not_collision_risk
 
 
     def _is_not_nook(self, move: Move) -> bool:
@@ -97,6 +98,23 @@ class Airbot(BotAi):
                 cnt += 1
         if cnt >= 3:
             return False
+        return True
+
+    def _is_clear_from_enemies(self, point: Point) -> bool:
+        cnt = 0
+        all_bot_locations = [
+            self._game_state.get_bot_location(b)
+            for b in self._game_state.get_live_bot_ids()
+            if b != self._bot_id
+        ]
+        for direction in ALL_DIRECTIONS:
+            # actually we check if, getting to that point, we get into the move
+            # zone of an enemy, i.e. if it's adjacent to that point
+            adjacent_square = direction.destination_from(point,
+                                  height=self._game_state.get_plan_height(),
+                                  width=self._game_state.get_plan_width())
+            if adjacent_square in all_bot_locations:
+                return False
         return True
 
     def _destination(self, move: Move) -> Point:
