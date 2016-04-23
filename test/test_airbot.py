@@ -274,8 +274,15 @@ class TestFillingSpace(BaseAirbotTest):
             '    ',
         ]
         assert self.go(game_plan).step1 == RIGHT
-        # go fast!
-        assert self.go(game_plan) in Move(RIGHT, RIGHT)
+
+    def test_should_stay_close_to_obstacles__x3__go_fast(self):
+        game_plan = [
+            '    ',
+            ' 1  ',
+            ' ***',
+            '    ',
+        ]
+        assert self.go(game_plan) == Move(RIGHT, RIGHT)
 
 
 class TestDistance:
