@@ -13,7 +13,7 @@ class BotRequestHandler(SimpleRequestHandler):
         try:
             return self._process_request_internal(request)
         except Exception as e:
-            print(e)
+            return 'ERROR: ' + str(e)
             return str(e)
 
     def _process_request_internal(self, request: str) -> str:
