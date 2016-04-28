@@ -9,20 +9,14 @@ class GameState:
                  plan_height: int,
                  bot_ids: Iterable[int],
                  bot_location_map: Dict[int, Point],
-                 bot_energy_map: Dict[int, int],
                  live_bot_ids: Iterable[int] = (),
-                 obstacles: Iterable[Point] = (),
-                 treasures: Iterable[Point] = (),
-                 batteries: Iterable[Point] = ()):
+                 obstacles: Iterable[Point] = ()):
         self._plan_width = plan_width
         self._plan_height = plan_height
         self._bot_ids = tuple(bot_ids)
         self._live_bot_ids = frozenset(live_bot_ids if live_bot_ids else bot_ids)
         self._bot_location_map = dict(bot_location_map.items())
-        self._bot_energy_map = dict(bot_energy_map.items())
         self._obstacles = frozenset(obstacles)
-        self._treasures = frozenset(treasures)
-        self._batteries = frozenset(batteries)
 
     def get_plan_width(self) -> int:
         """Returns the width of the game plan.
@@ -62,36 +56,12 @@ class GameState:
         self._assert_known_bot(bot_id)
         return self._bot_location_map.get(bot_id)
 
-    def get_bot_energy(self, bot_id: int) -> int:
-        """Returns current energy of the bot. The energy is a non-negative number.
-
-        :param bot_id: ID of the bot
-        :return current energy of the bot
-        :raises ValueError: if the bot ID is unknown
-        """
-        self._assert_known_bot(bot_id)
-        return self._bot_energy_map[bot_id]
-
     def get_obstacle_locations(self) -> FrozenSet[Point]:
         """Returns the set of coordinates of all obstacles on the game plan.
 
         :return the set of coordinates of all obstacles
         """
         return self._obstacles
-
-    def get_treasure_locations(self) -> FrozenSet[Point]:
-        """Returns the set of coordinates of all treasures on the game plan.
-
-        :return the set of coordinates of all treasures
-        """
-        return self._treasures
-
-    def get_battery_locations(self) -> FrozenSet[Point]:
-        """Returns the set of coordinates of all batteries on the game plan.
-
-        :return the set of coordinates of all batteries
-        """
-        return self._batteries
 
     def _assert_known_bot(self, bot_id: int) -> None:
         if bot_id not in self._bot_ids:

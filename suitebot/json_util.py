@@ -12,12 +12,9 @@ def game_state_from_json(move_request_json: str) -> GameState:
         plan_width=game_plan.get_plan_width(),
         plan_height=game_plan.get_plan_height(),
         bot_ids=move_request['botIds'],
+        live_bot_ids=move_request['liveBotIds'],
         bot_location_map=game_plan._bot_location_map,
-        bot_energy_map=move_request['botEnergyMap'],
-        live_bot_ids=game_plan.get_live_bot_ids(),
         obstacles=game_plan.get_obstacle_locations(),
-        treasures=game_plan.get_treasure_locations(),
-        batteries=game_plan.get_battery_locations()
     )
 
 

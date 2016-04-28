@@ -4,20 +4,12 @@ from suitebot.game.direction import *
 from suitebot.game.move import Move
 
 
-# XXX actual threshold depends on concrete game rules
-LOW_BOT_ENERGY = 1
-
-
 class BaseAirbotTest:
 
     BOT_ID = 1    # default bot ID
 
-    def go(self, game_plan, energy=None):
+    def go(self, game_plan):
         game_state = game_state_factory.create_from_game_plan_lines(game_plan)
-        if energy:
-            game_state._bot_energy_map = {
-                self.BOT_ID: energy,
-            }
         bot = Airbot()
         return bot.make_move(self.BOT_ID, game_state)
 
@@ -75,77 +67,6 @@ class TestTransparentBoundaries(BaseAirbotTest):
         ]
         assert self.go(game_plan) == Move(DOWN)
 
-'''
-class TestAirbotBoundaries(BaseAirbotTest):
-
-    def test_should_avoid_top_boundary(self):
-        game_plan = [
-            ' 1 ',
-            '   ',
-            '   ',
-        ]
-        assert self.go(game_plan) != Move(UP)
-
-    def test_should_avoid_right_boundary(self):
-        game_plan = [
-            '   ',
-            '  1',
-            '   ',
-        ]
-        assert self.go(game_plan) != Move(RIGHT)
-
-    def test_should_avoid_bottom_boundary(self):
-        game_plan = [
-            '   ',
-            '   ',
-            ' 1 ',
-        ]
-        assert self.go(game_plan) != Move(DOWN)
-
-    def test_should_avoid_left_boundary(self):
-        game_plan = [
-            '   ',
-            '1  ',
-            '   ',
-        ]
-        assert self.go(game_plan) != Move(LEFT)
-
-    def test_should_leave_left_top_corner(self):
-        game_plan = [
-            '1  ',
-            '   ',
-            '   ',
-        ]
-        wrong_moves = Move(UP), Move(LEFT)
-        assert self.go(game_plan) not in wrong_moves
-
-    def test_should_leave_right_top_corner(self):
-        game_plan = [
-            '  1',
-            '   ',
-            '   ',
-        ]
-        wrong_moves = Move(UP), Move(RIGHT)
-        assert self.go(game_plan) not in wrong_moves
-
-    def test_should_leave_right_bottom_corner(self):
-        game_plan = [
-            '   ',
-            '   ',
-            '  1',
-        ]
-        wrong_moves = Move(DOWN), Move(RIGHT)
-        assert self.go(game_plan) not in wrong_moves
-
-    def test_should_leave_left_bottom_corner(self):
-        game_plan = [
-            '   ',
-            '   ',
-            '1  ',
-        ]
-        wrong_moves = Move(DOWN), Move(LEFT)
-        assert self.go(game_plan) not in wrong_moves
-'''
 
 class TestAirbotObstacles(BaseAirbotTest):
 

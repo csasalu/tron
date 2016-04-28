@@ -37,7 +37,7 @@ def test_json():
         ],
         'yourBotId': 1,
         'botIds': [1],
-        'botEnergyMap': {},
+        'liveBotIds': [1],
     }
     data_json = json.dumps(data)
     retval = _send_and_recv(data_json)

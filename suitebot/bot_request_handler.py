@@ -14,7 +14,6 @@ class BotRequestHandler(SimpleRequestHandler):
             return self._process_request_internal(request)
         except Exception as e:
             return 'ERROR: ' + str(e)
-            return str(e)
 
     def _process_request_internal(self, request: str) -> str:
         if request == NAME_REQUEST:
