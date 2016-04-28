@@ -5,6 +5,15 @@ from suitebot.game.game_state import GameState
 from suitebot.game.point import Point
 
 
+def test_bot_id_from_json():
+    data = {
+        'yourBotId': 'Albatross!',
+    }
+    data_json = json.dumps(data)
+    rv = json_util.your_bot_id_from_json(data_json)
+    assert rv == 'Albatross!'
+
+
 def test_game_state_from_json():
     data = {
         'gamePlan': [
@@ -17,11 +26,16 @@ def test_game_state_from_json():
     }
     data_json = json.dumps(data)
     state = json_util.game_state_from_json(data_json)
+
     assert isinstance(state, GameState)
+
     assert state.get_plan_width() == 3
     assert state.get_plan_height() == 3
+
     assert state.get_all_bot_ids() == (1, 2, 3)
+
     assert state.get_live_bot_ids() == frozenset((1, 2))
+
     assert state.get_bot_location(1) == Point(1,1)
     assert state.get_bot_location(2) == Point(2,0)
     assert state.get_bot_location(3) == None
@@ -31,12 +45,3 @@ def test_game_state_from_json():
     assert Point(0,0) in obstacle_locations
     assert Point(1,2) in obstacle_locations
     assert Point(2,2) in obstacle_locations
-
-
-def test_bot_id_from_json():
-    data = {
-        'yourBotId': 'Albatross!',
-    }
-    data_json = json.dumps(data)
-    rv = json_util.your_bot_id_from_json(data_json)
-    assert rv == 'Albatross!'
