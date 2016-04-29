@@ -21,6 +21,6 @@ class BotRequestHandler(SimpleRequestHandler):
         return self._process_move_request(request)
 
     def _process_move_request(self, request: str) -> str:
-        bot_id = json_util.your_bot_id_from_json(request)
-        game_state = json_util.game_state_from_json(request)
-        return str(self._bot_ai.make_move(bot_id, game_state))
+        bot_id, game_state = json_util.bot_id_and_game_state_from_json(request)
+        move = self._bot_ai.make_move(bot_id, game_state)
+        return str(move)
